@@ -1,45 +1,50 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using CryptoConnect.DataProviders;
+using CryptoConnect.Factories;
+using CryptoConnect.GraphQL;
+using CryptoConnect.Models;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpClient("CoinGecko", client =>
+{
+    client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");  
+    client.DefaultRequestHeaders.Add("User-Agent", "CryptoMicroservice/1.0");
+});
+
+builder.Services.AddHttpClient("Binance", client =>
+{
+    client.BaseAddress = new Uri("https://api.binance.com/"); 
+    client.DefaultRequestHeaders.Add("User-Agent", "CryptoMicroservice/1.0");
+});
+
+builder.Services.AddSingleton<ICryptoDataProviderAdapter, CoinGeckoAdapter>();
+builder.Services.AddSingleton<ICryptoDataProviderAdapter, BinanceAdapter>();
+
+builder.Services.AddSingleton<ICryptoDataProvider>(serviceProvider =>
+{
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    var adapters = serviceProvider.GetServices<ICryptoDataProviderAdapter>();
+    var coinGeckoAdapter = adapters.First(a => a is CoinGeckoAdapter);
+    return new CoinGeckoDataProvider(httpClientFactory, coinGeckoAdapter);
+});
+
+builder.Services.AddSingleton<ICryptoDataProvider>(serviceProvider =>
+{
+    var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
+    var adapters = serviceProvider.GetServices<ICryptoDataProviderAdapter>();
+    var binanceAdapter = adapters.First(a => a is BinanceAdapter);
+    return new BinanceDataProvider(httpClientFactory, binanceAdapter);
+});
+
+builder.Services.AddSingleton<ICryptoDataProviderFactory, CryptoDataProviderFactory>();
+
+builder.Services
+       .AddGraphQLServer()
+       .AddQueryType<Query>()
+       .AddType<CryptoMarketData>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+app.MapGraphQL("/graphql");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-

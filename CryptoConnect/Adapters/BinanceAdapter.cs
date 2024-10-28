@@ -11,10 +11,9 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
 
         var marketDataList = new List<CryptoMarketData>();
 
-        // Check if the root is an array (multiple symbols) or a single object (one symbol)
+        // Check if the root is array or single object; observed that sometimes data is coming as an array and sometimes as an object
         if (root.ValueKind == JsonValueKind.Array)
         {
-            // Handle the array case: multiple symbols
             foreach (var item in root.EnumerateArray())
             {
                 var marketData = new CryptoMarketData
@@ -31,7 +30,6 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
         }
         else if (root.ValueKind == JsonValueKind.Object)
         {
-            // Handle the object case: one symbol
             var marketData = new CryptoMarketData
             {
                 Id = root.GetProperty("symbol").GetString(),
@@ -55,14 +53,10 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
     {
         using var jsonDocument = JsonDocument.Parse(rawData);
         var root = jsonDocument.RootElement;
-
         var prices = new Dictionary<string, decimal>();
-
-        Console.WriteLine("Kind of root: "+ root.ValueKind);
-        // Check if the root is an array (multiple symbols) or a single object (one symbol)
+        
         if (root.ValueKind == JsonValueKind.Array)
         {
-            // Handle the array case: multiple symbols
             foreach (var item in root.EnumerateArray())
             {
                 var symbol = item.GetProperty("symbol").GetString();
@@ -73,7 +67,6 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
         }
         else if (root.ValueKind == JsonValueKind.Object)
         {
-            // Handle the object case: one symbol
             var symbol = root.GetProperty("symbol").GetString();
             var priceString = root.GetProperty("price").GetString(); 
             var price = decimal.Parse(priceString);
@@ -83,7 +76,6 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
         {
             Console.WriteLine("Unexpected response format from Binance API.");
         }
-        System.Console.WriteLine(prices.Select(x => "Price:" + x.Key ));
         return prices;
     }
 

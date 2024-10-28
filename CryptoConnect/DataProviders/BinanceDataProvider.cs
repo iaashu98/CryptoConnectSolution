@@ -6,6 +6,7 @@ namespace CryptoConnect.DataProviders
 {
     public class BinanceDataProvider : ICryptoDataProvider
     {
+        //hardcoding the provider name
         public string ProviderName => "Binance";
         public readonly HttpClient _httpClient;
         public readonly ICryptoDataProviderAdapter _cryptoDataProvider;
@@ -24,7 +25,6 @@ namespace CryptoConnect.DataProviders
             {
                 tasks.Add(GetMarketDataForSymbolAsync(id));
             }
-
             var marketDataArray = await Task.WhenAll(tasks);
             return marketDataArray.ToList();
         }
@@ -35,16 +35,8 @@ namespace CryptoConnect.DataProviders
             {
                 var symbol = BinanceHelper.Instance.GetBinanceSymbol(cryptoId);
                 var url = $"api/v3/ticker/24hr?symbol={symbol}";
-                var response = await _httpClient.GetStringAsync(url);
-                Console.WriteLine($"Raw Binance API response: {response}");  
-
-                if (string.IsNullOrEmpty(response))
-                {
-                    Console.WriteLine($"Binance API returned an empty response for symbol {symbol}");
-                }
-
+                var response = await _httpClient.GetStringAsync(url); 
                 var marketData = _cryptoDataProvider.AdaptMarketData(response);
-                System.Console.WriteLine($"Market Data: {marketData.First()}");
 
                 if (marketData == null || !marketData.Any())
                 {
@@ -73,8 +65,6 @@ namespace CryptoConnect.DataProviders
 
                 using var jsonDocument = JsonDocument.Parse(response);
                 var root = jsonDocument.RootElement;
-                System.Console.WriteLine($"Root: {root}");
-                System.Console.WriteLine($"JsonDocs: {jsonDocument}");
 
                 var filteredElements = root.EnumerateArray().Where(
                     x =>

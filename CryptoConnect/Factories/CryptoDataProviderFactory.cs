@@ -1,18 +1,20 @@
-public class CryptoDataProviderFactory : ICryptoDataProviderFactory
+namespace CryptoConnect.Factories
 {
-    private readonly IDictionary<string, ICryptoDataProvider> _providers;
-
-    public CryptoDataProviderFactory(IEnumerable<ICryptoDataProvider> providers)
+    public class CryptoDataProviderFactory : ICryptoDataProviderFactory
     {
-        _providers = providers.ToDictionary(x => x.ProviderName, StringComparer.OrdinalIgnoreCase);
-    }
-    
-    public ICryptoDataProvider GetDataProvider(string ProviderName)
-    {
-        if (_providers.TryGetValue(ProviderName, out var provider))
+        private readonly IDictionary<string, ICryptoDataProvider> _providers;
+        public CryptoDataProviderFactory(IEnumerable<ICryptoDataProvider> providers)
         {
-            return provider;
+            _providers = providers.ToDictionary(x => x.ProviderName, StringComparer.OrdinalIgnoreCase);
         }
-        throw new ArgumentException($"Provider '{ProviderName}' not found.");
+        
+        public ICryptoDataProvider GetDataProvider(string ProviderName)
+        {
+            if (_providers.TryGetValue(ProviderName, out var provider))
+            {
+                return provider;
+            }
+            throw new ArgumentException($"Provider '{ProviderName}' not found.");
+        }
     }
 }

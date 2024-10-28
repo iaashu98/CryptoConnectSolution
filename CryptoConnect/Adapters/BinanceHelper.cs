@@ -3,11 +3,8 @@ namespace CryptoConnect.Adapters
     public class BinanceHelper 
     {
         private static readonly Lazy<BinanceHelper> _instance =   new Lazy<BinanceHelper>(() => new BinanceHelper());
-
         private BinanceHelper() { }   
-
         public static BinanceHelper Instance => _instance.Value;
-
         public string GetCryptoNameFromSymbol(string symbol)
         {
             return symbol switch
