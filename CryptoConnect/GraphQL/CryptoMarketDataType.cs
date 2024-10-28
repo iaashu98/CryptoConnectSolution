@@ -13,6 +13,5 @@ namespace CryptoConnect.GraphQL
             descriptor.Field(f => f.MarketCap).Type<StringType>();
             descriptor.Field(f => f.Volume).Type<StringType>();
         }
-    
     }
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
 
 public class CoinGeckoAdapter : ICryptoDataProviderAdapter
@@ -50,12 +51,12 @@ public class CoinGeckoAdapter : ICryptoDataProviderAdapter
         return marketDataList;
     }
 
-    public Dictionary<string, decimal> AdaptPrices(string rawData)
+    public CryptoPrice AdaptPrices(string rawData)
     {
         using var jsonDocument = JsonDocument.Parse(rawData);
         var root = jsonDocument.RootElement;
 
-        var prices = new Dictionary<string, decimal>();
+        CryptoPrice prices = new();
 
         // Check if the root is an array (multiple symbols) or a single object (one symbol)
         if (root.ValueKind == JsonValueKind.Object)
@@ -65,7 +66,7 @@ public class CoinGeckoAdapter : ICryptoDataProviderAdapter
             {
                 var symbol = item.Name;  // The property name is the symbol
                 var price = item.Value.GetProperty("usd").GetDecimal();  // Adjust based on CoinGecko's price format
-                prices.Add(symbol, price);
+                prices.Prices.Add(symbol,price);
             }
         }
         else

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CryptoConnect.Adapters;
+using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
 
 public class BinanceAdapter : ICryptoDataProviderAdapter
@@ -49,11 +50,11 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
         return marketDataList;
     }
 
-    public Dictionary<string, decimal> AdaptPrices(string rawData)
+    public CryptoPrice AdaptPrices(string rawData)
     {
         using var jsonDocument = JsonDocument.Parse(rawData);
         var root = jsonDocument.RootElement;
-        var prices = new Dictionary<string, decimal>();
+        CryptoPrice prices = new();
         
         if (root.ValueKind == JsonValueKind.Array)
         {
@@ -62,7 +63,7 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
                 var symbol = item.GetProperty("symbol").GetString();
                 var priceString = item.GetProperty("price").GetString(); 
                 var price = decimal.Parse(priceString);
-                prices.Add(symbol, price);
+                prices.Prices.Add(symbol, price);
             }
         }
         else if (root.ValueKind == JsonValueKind.Object)
@@ -70,7 +71,7 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
             var symbol = root.GetProperty("symbol").GetString();
             var priceString = root.GetProperty("price").GetString(); 
             var price = decimal.Parse(priceString);
-            prices.Add(symbol, price);
+            prices.Prices.Add(symbol, price);
         }
         else
         {

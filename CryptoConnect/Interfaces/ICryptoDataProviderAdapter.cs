@@ -1,7 +1,10 @@
 using CryptoConnect.Models;
 
-public interface ICryptoDataProviderAdapter
+namespace CryptoConnect.Interfaces
 {
-    Dictionary<string, decimal> AdaptPrices(string rawData);
-    List<CryptoMarketData> AdaptMarketData(string rawData);
+    public interface ICryptoDataProviderAdapter
+    {
+        CryptoPrice AdaptPrices(string rawData);
+        List<CryptoMarketData> AdaptMarketData(string rawData);
+    }
 }

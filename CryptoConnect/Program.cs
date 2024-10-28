@@ -1,6 +1,7 @@
 ﻿using CryptoConnect.DataProviders;
 using CryptoConnect.Factories;
 using CryptoConnect.GraphQL;
+using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,7 +42,8 @@ builder.Services.AddSingleton<ICryptoDataProviderFactory, CryptoDataProviderFact
 builder.Services
        .AddGraphQLServer()
        .AddQueryType<Query>()
-       .AddType<CryptoMarketData>();
+       .AddType<CryptoMarketData>()
+       .AddType<CryptoPrice>();
 
 var app = builder.Build();
 

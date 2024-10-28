@@ -11,7 +11,7 @@ namespace CryptoConnect.GraphQL
         }
 
         [GraphQLName("cryptoPrices")]
-        public async Task<Dictionary<string, decimal>> GetCryptoPrices(string[] cryptoIds, string provider)
+        public async Task<CryptoPrice> GetCryptoPrices(string[] cryptoIds, string provider)
         {
             var dataProvider = _cryptoDataProviderFactory.GetDataProvider(provider);
             return await dataProvider.GetCryptoPricesAsync(cryptoIds);

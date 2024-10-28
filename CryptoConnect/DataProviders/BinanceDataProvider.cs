@@ -1,6 +1,7 @@
 using CryptoConnect.Models;
 using CryptoConnect.Adapters;
 using System.Text.Json;
+using CryptoConnect.Interfaces;
 
 namespace CryptoConnect.DataProviders
 {
@@ -47,18 +48,19 @@ namespace CryptoConnect.DataProviders
             }
             catch (HttpRequestException ex)
             {
-                throw new Exception($"Failed to fetch market data for symbol {cryptoId} from Binance provider", ex);
+                throw new Exception($"Failed to fetch market data for symbol {cryptoId} from Binance provider; Message: {ex.Message}");
             }
             catch (Exception ex)
             {
-                throw new Exception($"An error occurred while fetching market data for symbol {cryptoId}", ex);
+                throw new Exception($"An error occurred while fetching market data for symbol {cryptoId}; Message: {ex.Message}");
             }
         }
 
-        public async Task<Dictionary<string, decimal>> GetCryptoPricesAsync(string[] cryptoIds)
+        public async Task<CryptoPrice> GetCryptoPricesAsync(string[] cryptoIds)
         {
             try
             {
+                CryptoPrice prices = new();
                 var binanceSymbols = cryptoIds.Select(x => BinanceHelper.Instance.GetBinanceSymbol(x)).ToList();
 
                 var response = await _httpClient.GetStringAsync("api/v3/ticker/price");
@@ -75,7 +77,7 @@ namespace CryptoConnect.DataProviders
                 ).ToList();
 
                 var filteredResponse = JsonSerializer.Serialize(filteredElements);
-                var prices = _cryptoDataProvider.AdaptPrices(filteredResponse);
+                prices = _cryptoDataProvider.AdaptPrices(filteredResponse);
 
                 return prices;
             }

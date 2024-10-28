@@ -1,3 +1,4 @@
+using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
 
 namespace CryptoConnect.DataProviders
@@ -15,7 +16,7 @@ namespace CryptoConnect.DataProviders
             _cryptoDataProvider = cryptoDataProvider;
         }
 
-        public async Task<Dictionary<string, decimal>> GetCryptoPricesAsync(string[] cryptoIds)
+        public async Task<CryptoPrice> GetCryptoPricesAsync(string[] cryptoIds)
         {
             var url = $"simple/price?ids={string.Join(",", cryptoIds)}&vs_currencies=usd";
             var response = await _httpClient.GetStringAsync(url);
