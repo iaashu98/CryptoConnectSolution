@@ -4,7 +4,9 @@
   padding: 2rem;
   text-align: center;
 }
-
+body{
+  @apply min-h-screen bg-gradient-to-br from-blue-700 via-indigo-500 to-purple-600 text-white flex items-center justify-center;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
