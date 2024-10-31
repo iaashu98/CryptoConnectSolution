@@ -1,12 +1,9 @@
 import { ICryptoList } from "../../interfaces/ICryptoList";
+import CustomShimmer from "../CustomShimmer";
 
 const CryptoList = ({ marketData, loading }: ICryptoList) => {
-
   return (
     <div className="w-full min-w-full overflow-x-auto bg-gray-800 rounded-lg shadow-md">
-      {loading ? (
-        <div className="min-w-full text-center text-white py-6">Loading...</div>
-      ) : (
         <table className="min-w-full table-auto text-left text-gray-200">
           <thead className="sticky top-0 z-10 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
             <tr>
@@ -19,7 +16,9 @@ const CryptoList = ({ marketData, loading }: ICryptoList) => {
             </tr>
           </thead>
           <tbody>
-            {marketData.map((crypto) => (
+        {loading
+          ? Array(5).fill(0).map((_, i) => <CustomShimmer key={i} />)
+          : marketData.map((crypto) => (
               <tr
                 key={crypto.id}
                 className="odd:bg-gray-700 even:bg-gray-800 hover:bg-gray-600 transition-colors duration-150"
@@ -27,14 +26,25 @@ const CryptoList = ({ marketData, loading }: ICryptoList) => {
                 <td className="px-6 py-4 border-b border-gray-700">{crypto.id}</td>
                 <td className="px-6 py-4 border-b border-gray-700">{crypto.symbol}</td>
                 <td className="px-6 py-4 border-b border-gray-700">{crypto.name}</td>
-                <td className="px-6 py-4 border-b border-gray-700">{crypto.currentPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}</td>
-                <td className="px-6 py-4 border-b border-gray-700">{crypto.marketCap.toLocaleString("en-US", { style: "currency", currency: "USD" })}</td>
-                <td className="px-6 py-4 border-b border-gray-700">{crypto.volume.toLocaleString()}</td>
+                <td className="px-6 py-4 border-b border-gray-700">
+                  {crypto.currentPrice.toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </td>
+                <td className="px-6 py-4 border-b border-gray-700">
+                  {crypto.marketCap.toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </td>
+                <td className="px-6 py-4 border-b border-gray-700">
+                  {crypto.volume.toLocaleString()}
+                </td>
               </tr>
             ))}
-          </tbody>
+      </tbody>
         </table>
-      )}
     </div>
   );
 };
