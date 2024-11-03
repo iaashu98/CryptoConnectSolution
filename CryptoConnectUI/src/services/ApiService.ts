@@ -43,5 +43,7 @@ export const fetchCryptoPrices = async (cryptoIds: string[], provider: string): 
             }
         }
     `;
-    return fetchGraphqlData<ICryptoPrices>(query);
+
+    const response = await fetchGraphqlData<{cryptoPrices : ICryptoPrices}>(query);
+    return response.cryptoPrices;
 };

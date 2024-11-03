@@ -1,24 +1,36 @@
 import { useState, useEffect } from 'react';
 import { ICryptoMarketData } from '../interfaces/ICryptoMarketData';
-import { fetchCryptoMarketData } from '../services/ApiService';
+import { fetchCryptoMarketData, fetchCryptoPrices } from '../services/ApiService';
 import ProviderSelector from './providerselector/ProviderSelector';
 import CryptoIdSelector from './cryptoidselector/CryptoIdSelector';
 import CryptoList from './cryptolist/CryptoList';
+import CryptoPrices from './cryptoprices/CryptoPrices';
+import { ICryptoPrices } from '../interfaces/ICryptoPrices';
 
 const CryptoDashboard = () => {
     const [selectedProvider, setSelectedProvider] = useState<string>('binance');
     const [selectedCryptoIds, setSelectedCryptoIds] = useState<string[]>(['bitcoin']);
     const [marketData, setMarketData] = useState<ICryptoMarketData[]>([]);
+    const [marketPrice, setMarketPrice] = useState<ICryptoPrices>();
     const [loading, setLoading] = useState<boolean>(false);
 
+    const fetchMarketData = async () => {
+        setLoading(true);
+        const data = await fetchCryptoMarketData(selectedCryptoIds, selectedProvider);
+        setMarketData(data);
+        setLoading(false);
+    };
+
+    const fetchMarketPriceData = async() => {
+        setLoading(true);
+        const data = await fetchCryptoPrices(selectedCryptoIds, selectedProvider);
+        setMarketPrice(data);
+        setLoading(false);
+    }
+
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const data = await fetchCryptoMarketData(selectedCryptoIds, selectedProvider);
-            setMarketData(data);
-            setLoading(false);
-        };
-        fetchData();
+        fetchMarketData();
+        fetchMarketPriceData();
     }, [selectedProvider, selectedCryptoIds]);
 
     return (
@@ -29,7 +41,9 @@ const CryptoDashboard = () => {
             <CryptoIdSelector selectedCryptoIds={selectedCryptoIds} onCryptoIdChange={setSelectedCryptoIds} />
 
             <div className="overflow-y-auto max-h-[250px]">
-                <CryptoList marketData={marketData} loading={loading} />
+                <CryptoList marketData = {marketData} loading = {loading} />
+                <br/>
+                <CryptoPrices marketPrice = {marketPrice} loading = {loading} />
             </div>
         </div>
     );
