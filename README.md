@@ -11,6 +11,7 @@ A full-stack crypto dashboard using .NET Core for the backend and React for the 
 - [Design Patterns Used](#design-patterns-used)
 - [Future Enhancements](#future-enhancements)
 - [GitHub Actions](#github-actions)
+- [GraphQL Queries](#graphql-queries)
 - [Adding New Providers](#adding-new-providers)
 - [Contributing](#contributing)
 
@@ -57,7 +58,7 @@ A full-stack crypto dashboard using .NET Core for the backend and React for the 
 ## Running the Application
 
 The backend runs on `http://localhost:5136` and the frontend on `http://localhost:5173`.
-Additionally, you can test the backend using Postman with this link `http://localhost:5000/graphql`. 
+Additionally, you can test the backend using Postman with this link `http://localhost:5136/graphql`. 
 
 
 ## Design Patterns Used
@@ -83,6 +84,32 @@ Additionally, you can test the backend using Postman with this link `http://loca
 
 ## GitHub Actions
 CI pipeline to test backend and frontend on each push and pull requests with error notifications.
+
+## GraphQL Queries
+
+### Fetch Real-Time Prices
+```bash 
+query {
+  cryptoPrices(symbols: ["bitcoin", "ethereum"], provider: "Binance") {
+    key
+    value
+  }
+}
+```
+
+### Fetch Market Data
+```bash
+query {
+  cryptoMarketData(symbols: ["bitcoin", "ethereum"], provider: "CoinGecko") {
+    id
+    name
+    symbol
+    currentPrice
+    marketCap
+    volume
+  }
+}
+```
 
 ## Adding New Providers
 
