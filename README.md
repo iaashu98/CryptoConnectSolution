@@ -5,7 +5,8 @@ A full-stack crypto dashboard using .NET Core for the backend and React for the 
 ## Table of Contents
 - [Project Structure](#project-structure)
 - [Features](#features)
-- [Technologies Used](#tech-stack)
+- [Screenshots](#screenshots)
+- [Technologies Used](#technologies-used)
 - [Setup Instructions](#setup-instructions)
 - [Running the Application](#running-the-application)
 - [Design Patterns Used](#design-patterns-used)
@@ -13,7 +14,7 @@ A full-stack crypto dashboard using .NET Core for the backend and React for the 
 - [GitHub Actions](#github-actions)
 - [GraphQL Queries](#graphql-queries)
 - [Adding New Providers](#adding-new-providers)
-- [Contributing](#contributing)
+- [Contributions](#contributions)
 
 
 ## Project Structure
@@ -26,6 +27,18 @@ A full-stack crypto dashboard using .NET Core for the backend and React for the 
 3. **Responsive UI** - Styled with Tailwind CSS for a modern interface.
 4. **Dynamic Provider Selection:** Clients can specify a provider in their GraphQL query, and the application will dynamically switch to that provider to retrieve data.
 5. **Standardized Data Format:** Regardless of the selected provider, data is presented in a consistent format with fields like id, name, currentPrice, marketCap, etc.
+
+## Screenshots
+Attaching few screenshots from my localhost. 
+
+### With Single select Cryptocurrencies for each Provider
+<img width="1437" alt="Coingecko provider" src="https://github.com/user-attachments/assets/f15944de-d7f6-47af-8dfd-6d98be6ad854">
+<img width="1433" alt="Binance provider" src="https://github.com/user-attachments/assets/8a52a10a-6d56-4b38-94e2-81a43bc55602">
+
+### With Multi select Cryptocurrencies for each Provider
+<img width="1432" alt="Binance provider" src="https://github.com/user-attachments/assets/f5afe899-16e9-4678-9f3b-66136e128d3b">
+<img width="1434" alt="Coingecko provider"  src="https://github.com/user-attachments/assets/4282c002-452a-419c-8866-20a00ed38f0a">
+
 
 ## Technologies Used
 - **Frontend**: React, TypeScript, Tailwind CSS
