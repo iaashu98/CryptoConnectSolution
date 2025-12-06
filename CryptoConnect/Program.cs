@@ -18,15 +18,18 @@ builder.Services.AddHttpClient("Binance", client =>
     client.DefaultRequestHeaders.Add("User-Agent", "CryptoMicroservice/1.0");
 });
 
-builder.Services.AddSingleton<ICryptoDataProviderAdapter, CoinGeckoAdapter>();
-builder.Services.AddSingleton<ICryptoDataProviderAdapter, BinanceAdapter>();
+builder.Services.AddSingleton<ICryptoDataProviderAdapter>(sp => 
+    new CoinGeckoAdapter(sp.GetRequiredService<ILogger<CoinGeckoAdapter>>()));
+builder.Services.AddSingleton<ICryptoDataProviderAdapter>(sp => 
+    new BinanceAdapter(sp.GetRequiredService<ILogger<BinanceAdapter>>()));
 
 builder.Services.AddSingleton<ICryptoDataProvider>(serviceProvider =>
 {
     var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
     var adapters = serviceProvider.GetServices<ICryptoDataProviderAdapter>();
     var coinGeckoAdapter = adapters.First(a => a is CoinGeckoAdapter);
-    return new CoinGeckoDataProvider(httpClientFactory, coinGeckoAdapter);
+    var logger = serviceProvider.GetRequiredService<ILogger<CoinGeckoDataProvider>>();
+    return new CoinGeckoDataProvider(httpClientFactory, coinGeckoAdapter, logger);
 });
 
 builder.Services.AddSingleton<ICryptoDataProvider>(serviceProvider =>
@@ -43,7 +46,16 @@ builder.Services
        .AddGraphQLServer()
        .AddQueryType<Query>()
        .AddType<CryptoMarketData>()
-       .AddType<CryptoPrice>();
+       .AddType<CryptoPrice>()
+       .AddErrorFilter(error =>
+       {
+           // Pass through HttpRequestException messages to the frontend
+           if (error.Exception is HttpRequestException httpEx)
+           {
+               return error.WithMessage(httpEx.Message);
+           }
+           return error;
+       });
 
 builder.Services.AddCors(options =>
 {
@@ -51,7 +63,6 @@ builder.Services.AddCors(options =>
     builder =>
             builder.AllowAnyHeader()
                     .AllowAnyMethod()
-                    .AllowAnyOrigin()
                     .WithOrigins("http://localhost:5173"));
 });
 

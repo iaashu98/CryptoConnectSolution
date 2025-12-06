@@ -2,9 +2,17 @@ using System.Text.Json;
 using CryptoConnect.Adapters;
 using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
+using Microsoft.Extensions.Logging;
 
 public class BinanceAdapter : ICryptoDataProviderAdapter
 {
+    private readonly ILogger<BinanceAdapter> _logger;
+
+    public BinanceAdapter(ILogger<BinanceAdapter> logger)
+    {
+        _logger = logger;
+    }
+
     public List<CryptoMarketData> AdaptMarketData(string rawData)
     {
         using var jsonDocument = JsonDocument.Parse(rawData);
@@ -17,34 +25,45 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
         {
             foreach (var item in root.EnumerateArray())
             {
+                var symbol = item.GetProperty("symbol").GetString();
+                if (string.IsNullOrEmpty(symbol))
+                {
+                    _logger.LogWarning("Skipping item with null or empty symbol");
+                    continue;
+                }
+
                 var marketData = new CryptoMarketData
                 {
-                    Id = item.GetProperty("symbol").GetString(),
-                    Symbol = item.GetProperty("symbol").GetString(),
-                    Name = BinanceHelper.Instance.GetCryptoNameFromSymbol(item.GetProperty("symbol").GetString()),
-                    CurrentPrice = Convert.ToDecimal(item.GetProperty("lastPrice").GetString()),
+                    Id = symbol,
+                    Symbol = symbol,
+                    Name = BinanceHelper.Instance.GetCryptoNameFromSymbol(symbol) ?? symbol,
+                    CurrentPrice = item.TryGetProperty("lastPrice", out var lastPrice) ? Convert.ToDecimal(lastPrice.GetString()) : 0,
                     MarketCap = 0,  // Binance doesn't provide MarketCap in this API
-                    Volume = Convert.ToDecimal(item.GetProperty("volume").GetString())
+                    Volume = item.TryGetProperty("volume", out var volume) ? Convert.ToDecimal(volume.GetString()) : 0
                 };
                 marketDataList.Add(marketData);
             }
         }
         else if (root.ValueKind == JsonValueKind.Object)
         {
-            var marketData = new CryptoMarketData
+            var symbol = root.GetProperty("symbol").GetString();
+            if (!string.IsNullOrEmpty(symbol))
             {
-                Id = root.GetProperty("symbol").GetString(),
-                Symbol = root.GetProperty("symbol").GetString(),
-                Name = BinanceHelper.Instance.GetCryptoNameFromSymbol(root.GetProperty("symbol").GetString()),
-                CurrentPrice = Convert.ToDecimal(root.GetProperty("lastPrice").GetString()),
-                MarketCap = 0,  // Binance doesn't provide MarketCap in this API
-                Volume = Convert.ToDecimal(root.GetProperty("volume").GetString())
-            };
-            marketDataList.Add(marketData);
+                var marketData = new CryptoMarketData
+                {
+                    Id = symbol,
+                    Symbol = symbol,
+                    Name = BinanceHelper.Instance.GetCryptoNameFromSymbol(symbol) ?? symbol,
+                    CurrentPrice = root.TryGetProperty("lastPrice", out var lastPrice) ? Convert.ToDecimal(lastPrice.GetString()) : 0,
+                    MarketCap = 0,  // Binance doesn't provide MarketCap in this API
+                    Volume = root.TryGetProperty("volume", out var volume) ? Convert.ToDecimal(volume.GetString()) : 0
+                };
+                marketDataList.Add(marketData);
+            }
         }
         else
         {
-            Console.WriteLine("Unexpected response format from Binance API.");
+            _logger.LogWarning("Unexpected response format from Binance API. ValueKind: {ValueKind}", root.ValueKind);
         }
 
         return marketDataList;
@@ -61,21 +80,31 @@ public class BinanceAdapter : ICryptoDataProviderAdapter
             foreach (var item in root.EnumerateArray())
             {
                 var symbol = item.GetProperty("symbol").GetString();
-                var priceString = item.GetProperty("price").GetString(); 
-                var price = decimal.Parse(priceString);
-                prices.Prices.Add(symbol, price);
+                if (!string.IsNullOrEmpty(symbol) && item.TryGetProperty("price", out var priceElement))
+                {
+                    var priceString = priceElement.GetString();
+                    if (decimal.TryParse(priceString, out var price))
+                    {
+                        prices.Prices.Add(symbol, price);
+                    }
+                }
             }
         }
         else if (root.ValueKind == JsonValueKind.Object)
         {
             var symbol = root.GetProperty("symbol").GetString();
-            var priceString = root.GetProperty("price").GetString(); 
-            var price = decimal.Parse(priceString);
-            prices.Prices.Add(symbol, price);
+            if (!string.IsNullOrEmpty(symbol) && root.TryGetProperty("price", out var priceElement))
+            {
+                var priceString = priceElement.GetString();
+                if (decimal.TryParse(priceString, out var price))
+                {
+                    prices.Prices.Add(symbol, price);
+                }
+            }
         }
         else
         {
-            Console.WriteLine("Unexpected response format from Binance API.");
+            _logger.LogWarning("Unexpected response format from Binance API. ValueKind: {ValueKind}", root.ValueKind);
         }
         return prices;
     }

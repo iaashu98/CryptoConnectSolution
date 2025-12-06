@@ -13,24 +13,32 @@ const CryptoDashboard = () => {
     const [marketData, setMarketData] = useState<ICryptoMarketData[]>([]);
     const [marketPrice, setMarketPrice] = useState<ICryptoPrices>();
     const [loading, setLoading] = useState<boolean>(false);
-
-    const fetchMarketData = async () => {
-        setLoading(true);
-        const data = await fetchCryptoMarketData(selectedCryptoIds, selectedProvider);
-        setMarketData(data);
-        setLoading(false);
-    };
-
-    const fetchMarketPriceData = async() => {
-        setLoading(true);
-        const data = await fetchCryptoPrices(selectedCryptoIds, selectedProvider);
-        setMarketPrice(data);
-        setLoading(false);
-    }
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchMarketData();
-        fetchMarketPriceData();
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                // Fetch both market data and prices concurrently
+                const [dataResult, priceResult] = await Promise.all([
+                    fetchCryptoMarketData(selectedCryptoIds, selectedProvider),
+                    fetchCryptoPrices(selectedCryptoIds, selectedProvider)
+                ]);
+
+                setMarketData(dataResult);
+                setMarketPrice(priceResult);
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Failed to fetch crypto data';
+                setError(errorMessage);
+                console.error('Error fetching crypto data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [selectedProvider, selectedCryptoIds]);
 
     return (
@@ -40,10 +48,17 @@ const CryptoDashboard = () => {
             <ProviderSelector selectedProvider={selectedProvider} onProviderChange={setSelectedProvider} />
             <CryptoIdSelector selectedCryptoIds={selectedCryptoIds} onCryptoIdChange={setSelectedCryptoIds} />
 
+            {error && (
+                <div className="bg-red-500 text-white p-4 rounded-lg">
+                    <p className="font-semibold">Error:</p>
+                    <p>{error}</p>
+                </div>
+            )}
+
             <div className="overflow-y-auto max-h-[250px]">
-                <CryptoList marketData = {marketData} loading = {loading} />
-                <br/>
-                <CryptoPrices marketPrice = {marketPrice} loading = {loading} />
+                <CryptoList marketData={marketData} loading={loading} />
+                <br />
+                <CryptoPrices marketPrice={marketPrice} loading={loading} />
             </div>
         </div>
     );

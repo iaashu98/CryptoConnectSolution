@@ -1,3 +1,4 @@
-export interface IGraphQLResponse<T>{
-    data: T
+export interface IGraphQLResponse<T> {
+    data: T;
+    errors?: Array<{ message: string }>;
 }

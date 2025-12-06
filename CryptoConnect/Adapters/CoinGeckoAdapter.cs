@@ -1,9 +1,17 @@
 using System.Text.Json;
 using CryptoConnect.Interfaces;
 using CryptoConnect.Models;
+using Microsoft.Extensions.Logging;
 
 public class CoinGeckoAdapter : ICryptoDataProviderAdapter
 {
+    private readonly ILogger<CoinGeckoAdapter> _logger;
+
+    public CoinGeckoAdapter(ILogger<CoinGeckoAdapter> logger)
+    {
+        _logger = logger;
+    }
+
     public List<CryptoMarketData> AdaptMarketData(string rawData)
     {
         using var jsonDocument = JsonDocument.Parse(rawData);
@@ -17,14 +25,21 @@ public class CoinGeckoAdapter : ICryptoDataProviderAdapter
             // Handle the array case: multiple symbols
             foreach (var item in root.EnumerateArray())
             {
+                var id = item.GetProperty("id").GetString();
+                if (string.IsNullOrEmpty(id))
+                {
+                    _logger.LogWarning("Skipping item with null or empty id");
+                    continue;
+                }
+
                 var marketData = new CryptoMarketData
                 {
-                    Id = item.GetProperty("id").GetString(),
-                    Symbol = item.GetProperty("symbol").GetString(),
-                    Name = item.GetProperty("name").GetString(),
-                    CurrentPrice = item.GetProperty("current_price").GetDecimal(),
-                    MarketCap = item.GetProperty("market_cap").GetDecimal(),
-                    Volume = item.GetProperty("total_volume").GetDecimal()
+                    Id = id,
+                    Symbol = item.TryGetProperty("symbol", out var symbol) ? symbol.GetString() ?? id : id,
+                    Name = item.TryGetProperty("name", out var name) ? name.GetString() ?? id : id,
+                    CurrentPrice = item.TryGetProperty("current_price", out var currentPrice) ? currentPrice.GetDecimal() : 0,
+                    MarketCap = item.TryGetProperty("market_cap", out var marketCap) ? marketCap.GetDecimal() : 0,
+                    Volume = item.TryGetProperty("total_volume", out var totalVolume) ? totalVolume.GetDecimal() : 0
                 };
                 marketDataList.Add(marketData);
             }
@@ -32,20 +47,24 @@ public class CoinGeckoAdapter : ICryptoDataProviderAdapter
         else if (root.ValueKind == JsonValueKind.Object)
         {
             // Handle the object case: one symbol
-            var marketData = new CryptoMarketData
+            var id = root.GetProperty("id").GetString();
+            if (!string.IsNullOrEmpty(id))
             {
-                Id = root.GetProperty("id").GetString(),
-                Symbol = root.GetProperty("symbol").GetString(),
-                Name = root.GetProperty("name").GetString(),
-                CurrentPrice = root.GetProperty("current_price").GetDecimal(),
-                MarketCap = root.GetProperty("market_cap").GetDecimal(),
-                Volume = root.GetProperty("volume").GetDecimal()
-            };
-            marketDataList.Add(marketData);
+                var marketData = new CryptoMarketData
+                {
+                    Id = id,
+                    Symbol = root.TryGetProperty("symbol", out var symbol) ? symbol.GetString() ?? id : id,
+                    Name = root.TryGetProperty("name", out var name) ? name.GetString() ?? id : id,
+                    CurrentPrice = root.TryGetProperty("current_price", out var currentPrice) ? currentPrice.GetDecimal() : 0,
+                    MarketCap = root.TryGetProperty("market_cap", out var marketCap) ? marketCap.GetDecimal() : 0,
+                    Volume = root.TryGetProperty("volume", out var volume) ? volume.GetDecimal() : 0
+                };
+                marketDataList.Add(marketData);
+            }
         }
         else
         {
-            Console.WriteLine("Unexpected response format from CoinGecko API.");
+            _logger.LogWarning("Unexpected response format from CoinGecko API. ValueKind: {ValueKind}", root.ValueKind);
         }
 
         return marketDataList;
@@ -64,14 +83,17 @@ public class CoinGeckoAdapter : ICryptoDataProviderAdapter
             // Handle the object case: multiple symbols are represented as properties of the object
             foreach (var item in root.EnumerateObject())
             {
-                var symbol = item.Name;  // The property name is the symbol
-                var price = item.Value.GetProperty("usd").GetDecimal();  // Adjust based on CoinGecko's price format
-                prices.Prices.Add(symbol,price);
+                var symbolName = item.Name;  // The property name is the symbol
+                if (!string.IsNullOrEmpty(symbolName) && item.Value.TryGetProperty("usd", out var usdPrice))
+                {
+                    var price = usdPrice.GetDecimal();
+                    prices.Prices.Add(symbolName, price);
+                }
             }
         }
         else
         {
-            Console.WriteLine("Unexpected response format from CoinGecko API.");
+            _logger.LogWarning("Unexpected response format from CoinGecko API. ValueKind: {ValueKind}", root.ValueKind);
         }
 
         return prices;
